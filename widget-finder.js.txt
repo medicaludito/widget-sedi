@@ -1,0 +1,70 @@
+// ==================== SEDI MEDICAL UDITO ====================
+const sedi = [
+  { nome: "Medical Udito Brescia", comune: "Brescia", indirizzo: "Via San Polo 209, Brescia" },
+  { nome: "Medical Udito Manerbio", comune: "Manerbio", indirizzo: "Piazza Italia 6, Manerbio" },
+  { nome: "Medical Udito Gardone VT", comune: "Gardone Val Trompia", indirizzo: "Via Fabio Filzi 11/m, Gardone VT" },
+  { nome: "Medical Udito Chiari", comune: "Chiari", indirizzo: "Via Gian Battista Rota 2, Chiari" },
+  { nome: "Medical Udito Breno", comune: "Breno", indirizzo: "Piazzetta Lino Vielmi 3, Breno" },
+  { nome: "Medical Udito Castiglione", comune: "Castiglione delle Stiviere", indirizzo: "Via Marta Tana 2, Castiglione delle Stiviere" }
+];
+
+// ==================== FUNZIONE LEVENSHTEIN ====================
+function levenshtein(a, b) {
+  a = a.toLowerCase();
+  b = b.toLowerCase();
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+// ==================== FUNZIONE TROVA SEDE ====================
+function trovaSede() {
+  const input = document.getElementById('comuneInput').value.trim();
+  const risultato = document.getElementById('risultato');
+  risultato.innerHTML = '';
+
+  if (!input) {
+    risultato.innerHTML = `<p style='color:#c00000; font-weight:600;'>Inserisci un comune per continuare.</p>`;
+    return;
+  }
+
+  let best = null, bestScore = Infinity;
+
+  sedi.forEach(s => {
+    const score = levenshtein(input, s.comune);
+    if (score < bestScore) {
+      bestScore = score;
+      best = s;
+    }
+  });
+
+  const sogliaRelax = Math.min(4, Math.floor(input.length / 2));
+
+  if (best && bestScore <= Math.max(2, sogliaRelax)) {
+    risultato.innerHTML = `
+      <div style="padding:18px; background:#f5fff9; border:1px solid #00883630; border-radius:14px;">
+        <p style="font-size:18px; font-weight:700; color:#008836; margin-bottom:6px;">Sede suggerita:</p>
+        <p style="font-size:17px; margin:0;"><strong>${best.nome}</strong><br>${best.indirizzo}</p>
+      </div>`;
+  } else {
+    risultato.innerHTML = `<p>Nessuna corrispondenza affidabile trovata. Contattaci per assistenza.</p>`;
+  }
+}
+
+// ==================== EVENTI ====================
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnCerca');
+  const input = document.getElementById('comuneInput');
+
+  if (btn) btn.addEventListener('click', trovaSede);
+  if (input) input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') trovaSede();
+  });
+});
